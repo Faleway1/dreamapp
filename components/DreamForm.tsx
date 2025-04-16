@@ -97,8 +97,7 @@ export default function DreamForm() {
       } else {
         formDataArray.push(newDream);
         Alert.alert('Succès', 'Le rêve a bien été ajouté.');
-  
-        // ✅ Reset des champs du formulaire après ajout
+
         setDreamText('');
         setDreamDate('');
         setDreamTime('');

@@ -53,6 +53,7 @@ export default function DreamList() {
         <View key={index} style={styles.card}>
           <Text style={styles.dreamText}>
             <Text style={styles.label}>Texte :</Text> {dream.dreamText}{'\n'}
+            <Text style={styles.label}>Date :</Text> {dream.dreamDate}{'\n'}
             <Text style={styles.label}>Heure :</Text> {dream.dreamTime}{'\n'}
             <Text style={styles.label}>Avant :</Text> {dream.emotionalStateBefore}{'\n'}
             <Text style={styles.label}>Après :</Text> {dream.emotionalStateAfter}{'\n'}
