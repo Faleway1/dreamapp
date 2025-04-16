@@ -1,165 +1,209 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
-import { TextInput, Button, Checkbox } from 'react-native-paper';
+// app/dream-form.tsx
+
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { TextInput, Button, Checkbox, List } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {Calendar, CalendarList, Agenda} from 'react-native-calendars'
-
-const { width } = Dimensions.get('window');
-
-const findHashtagIdByLabel = async (hashtag) => {
-  try {
-    // Récupère les données des rêves stockées dans le AsyncStorage
-    const existingDreams = await AsyncStorage.getItem('dreamFormDataArray');
-    let dreamsData = existingDreams ? JSON.parse(existingDreams) : [];
-
-    // Parcours tous les rêves pour trouver un hashtag existant
-    for (let dream of dreamsData) {
-      for (let hashtagKey in dream.hashtags) {
-        const hashtagStored = dream.hashtags[hashtagKey]; // Récupère l'objet du hashtag stocké
-
-        if (hashtagStored.label === hashtag) {
-          // Si le hashtag est trouvé, renvoie son ID
-          return hashtagStored.id;
-        }
-      }
-    }
-
-    // Si le hashtag n'existe pas, crée un nouvel ID
-    const newId = `hashtag-${Math.random().toString(36).substr(2, 9)}`;
-    return newId;
-
-  } catch (error) {
-    console.error('Erreur lors de la gestion des hashtags:', error);
-    return null;
-  }
-};
+import { Calendar } from 'react-native-calendars';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 export default function DreamForm() {
+  const { editingIndex } = useLocalSearchParams();
+  const router = useRouter();
+
   const [dreamText, setDreamText] = useState('');
-  const [hashtag1, setHashtag1] = useState('');
-  const [hashtag2, setHashtag2] = useState('');
-  const [hashtag3, setHashtag3] = useState('');
-  const [isLucide]= useState('')
-  const [isNightmare]= useState('')
-  const [isNormal]= useState('')
+  const [dreamDate, setDreamDate] = useState('');
+  const [dreamTime, setDreamTime] = useState('');
   const [dreamType, setDreamType] = useState('');
-  const [selected, setSelected] = useState('');
+  const [emotionalStateBefore, setEmotionalStateBefore] = useState('');
+  const [emotionalStateAfter, setEmotionalStateAfter] = useState('');
+  const [characters, setCharacters] = useState('');
+  const [dreamLocation, setDreamLocation] = useState('');
+  const [emotionalIntensity, setEmotionalIntensity] = useState('');
+  const [dreamClarity, setDreamClarity] = useState('');
+  const [tags, setTags] = useState('');
+  const [sleepQuality, setSleepQuality] = useState('');
+  const [personalMeaning, setPersonalMeaning] = useState('');
+  const [dreamTone, setDreamTone] = useState('');
+
+  const [expanded, setExpanded] = useState({});
+
+  useEffect(() => {
+    const loadDreamData = async () => {
+      if (editingIndex !== undefined) {
+        try {
+          const storedData = await AsyncStorage.getItem('dreamFormDataArray');
+          const dreamArray = storedData ? JSON.parse(storedData) : [];
+          const dream = dreamArray[Number(editingIndex)];
+  
+          if (!dream) {
+            Alert.alert("Erreur", "Le rêve à modifier est introuvable.");
+            router.replace('/three');
+            return;
+          }
+  
+          setDreamText(dream.dreamText || '');
+          setDreamDate(dream.dreamDate || '');
+          setDreamTime(dream.dreamTime || '');
+          setDreamType(dream.dreamType || '');
+          setEmotionalStateBefore(dream.emotionalStateBefore || '');
+          setEmotionalStateAfter(dream.emotionalStateAfter || '');
+          setCharacters(dream.characters || '');
+          setDreamLocation(dream.dreamLocation || '');
+          setEmotionalIntensity(dream.emotionalIntensity || '');
+          setDreamClarity(dream.dreamClarity || '');
+          setTags(dream.tags || '');
+          setSleepQuality(dream.sleepQuality || '');
+          setPersonalMeaning(dream.personalMeaning || '');
+          setDreamTone(dream.dreamTone || '');
+        } catch (error) {
+          console.error('Erreur lors du chargement du rêve à éditer:', error);
+        }
+      }
+    };
+  
+    loadDreamData();
+  }, [editingIndex]);
+
+  const toggleExpand = (key: string) => {
+    setExpanded((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const handleDreamSubmission = async () => {
     try {
-      // Récupérer le tableau actuel depuis AsyncStorage
       const existingData = await AsyncStorage.getItem('dreamFormDataArray');
       const formDataArray = existingData ? JSON.parse(existingData) : [];
-
-      // Trouver les IDs des hashtags
-      const hashtag1Id = await findHashtagIdByLabel(hashtag1);
-      const hashtag2Id = await findHashtagIdByLabel(hashtag2);
-      const hashtag3Id = await findHashtagIdByLabel(hashtag3);
-
-      // Ajouter le nouveau formulaire au tableau
-      formDataArray.push({
-        dreamText: dreamText,
-        dreamType: dreamType,
-        todayDate: new Date(),
-        hashtags: [
-          { id: hashtag1Id, label: hashtag1 },
-          { id: hashtag2Id, label: hashtag2 },
-          { id: hashtag3Id, label: hashtag3 },
-        ],
-      });
-
-      // Sauvegarder le tableau mis à jour dans AsyncStorage
+  
+      const newDream = {
+        dreamText,
+        dreamDate,
+        dreamTime,
+        dreamType,
+        emotionalStateBefore,
+        emotionalStateAfter,
+        characters,
+        dreamLocation,
+        emotionalIntensity,
+        dreamClarity,
+        tags,
+        sleepQuality,
+        personalMeaning,
+        dreamTone,
+      };
+  
+      if (editingIndex !== undefined) {
+        formDataArray[Number(editingIndex)] = newDream;
+        Alert.alert('Succès', 'Le rêve a bien été modifié.');
+      } else {
+        formDataArray.push(newDream);
+        Alert.alert('Succès', 'Le rêve a bien été ajouté.');
+  
+        // ✅ Reset des champs du formulaire après ajout
+        setDreamText('');
+        setDreamDate('');
+        setDreamTime('');
+        setDreamType('');
+        setEmotionalStateBefore('');
+        setEmotionalStateAfter('');
+        setCharacters('');
+        setDreamLocation('');
+        setEmotionalIntensity('');
+        setDreamClarity('');
+        setTags('');
+        setSleepQuality('');
+        setPersonalMeaning('');
+        setDreamTone('');
+      }
+  
       await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(formDataArray));
-
-      // Réinitialiser les champs du formulaire
-      setDreamText('');
-      setDreamType('');
-      setHashtag1('');
-      setHashtag2('');
-      setHashtag3('');
-
+  
+      router.replace('/(tabs)/three'); // retour vers la page précédente
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
     }
-};
-
+  };
 
   return (
-    <View style={styles.container}>
-
+    <ScrollView contentContainerStyle={styles.container}>
       <TextInput
         label="Rêve"
         value={dreamText}
-        onChangeText={(text) => setDreamText(text)}
+        onChangeText={setDreamText}
         mode="outlined"
         multiline
         numberOfLines={6}
-        style={[styles.input, { width: width * 0.8, alignSelf: 'center' }]}
+        style={styles.input}
       />
 
-<TextInput
-        label="Hashtag 1"
-        value={hashtag1}
-        onChangeText={(hashtag1) => setHashtag1(hashtag1)}
-        mode="outlined"
-        style={[styles.input, { width: width * 0.8, alignSelf: 'center' }]}
-      />
+      <View style={styles.calendarWrapper}>
+        <Calendar onDayPress={(day) => setDreamDate(day.dateString)} markedDates={dreamDate ? { [dreamDate]: { selected: true } } : {}} />
+      </View>
 
-      <TextInput
-        label="Hashtag 2"
-        value={hashtag2}
-        onChangeText={(hashtag2) => setHashtag2(hashtag2)}
-        mode="outlined"
-        style={[styles.input, { width: width * 0.8, alignSelf: 'center' }]}
-      />
+      <TextInput label="Heure du rêve" value={dreamTime} onChangeText={setDreamTime} mode="outlined" style={styles.input} />
 
-      <TextInput
-        label="Hashtag 3"
-        value={hashtag3}
-        onChangeText={(hashtag3) => setHashtag3(hashtag3)}
-        mode="outlined"
-        style={[styles.input, { width: width * 0.8, alignSelf: 'center' }]}
-      />
+      <List.Accordion title="État émotionnel" expanded={expanded.emotions} onPress={() => toggleExpand('emotions')}>
+        <TextInput label="Avant" value={emotionalStateBefore} onChangeText={setEmotionalStateBefore} mode="outlined" style={styles.input} />
+        <TextInput label="Après" value={emotionalStateAfter} onChangeText={setEmotionalStateAfter} mode="outlined" style={styles.input} />
+      </List.Accordion>
+
+      <List.Accordion title="Personnages présents" expanded={expanded.characters} onPress={() => toggleExpand('characters')}>
+        <TextInput label="Personnages" value={characters} onChangeText={setCharacters} mode="outlined" style={styles.input} />
+      </List.Accordion>
+
+      <List.Accordion title="Autres détails" expanded={expanded.details} onPress={() => toggleExpand('details')}>
+        <TextInput label="Intensité émotionnelle" value={emotionalIntensity} onChangeText={setEmotionalIntensity} mode="outlined" style={styles.input} />
+        <TextInput label="Clarté du rêve" value={dreamClarity} onChangeText={setDreamClarity} mode="outlined" style={styles.input} />
+        <TextInput label="Tags/Mots-clés" value={tags} onChangeText={setTags} mode="outlined" style={styles.input} />
+        <TextInput label="Qualité du sommeil" value={sleepQuality} onChangeText={setSleepQuality} mode="outlined" style={styles.input} />
+        <TextInput label="Signification personnelle" value={personalMeaning} onChangeText={setPersonalMeaning} mode="outlined" style={styles.input} />
+        <TextInput label="Tonalité du rêve" value={dreamTone} onChangeText={setDreamTone} mode="outlined" style={styles.input} />
+      </List.Accordion>
 
       <View style={styles.checkboxContainer}>
-        <Checkbox.Item
-          label="Rêve Lucide"
-          status={isLucide ? 'checked' : 'unchecked'}
-          onPress={() => setDreamType('Reve Lucide')}
-        />
-        <Checkbox.Item
-          label= "Cauchemar"
-          status={isNightmare ? 'checked' : 'unchecked'}
-          onPress={() => setDreamType('Cauchemar')}
-        />
-        <Checkbox.Item
-          label= "Reve Normal"
-          status={isNormal ? 'checked' : 'unchecked'}
-          onPress={() => setDreamType('Reve Normal')}
-        />
+        <Checkbox.Item label="Rêve Lucide" status={dreamType === 'Reve Lucide' ? 'checked' : 'unchecked'} onPress={() => setDreamType('Reve Lucide')} />
+        <Checkbox.Item label="Cauchemar" status={dreamType === 'Cauchemar' ? 'checked' : 'unchecked'} onPress={() => setDreamType('Cauchemar')} />
+        <Checkbox.Item label="Rêve Ordinaire" status={dreamType === 'Reve Ordinaire' ? 'checked' : 'unchecked'} onPress={() => setDreamType('Reve Ordinaire')} />
       </View>
 
       <Button mode="contained" onPress={handleDreamSubmission} style={styles.button}>
-        Soumettre
+        {editingIndex !== undefined ? 'Modifier le rêve' : 'Soumettre'}
       </Button>
-
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    flexGrow: 1,
+    backgroundColor: '#F2F0F9',
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 40,
   },
   input: {
     marginBottom: 16,
+    color: '#000',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+  },
+  calendarWrapper: {
+    marginBottom: 24,
+    borderRadius: 12,
+    overflow: 'hidden',
+    borderColor: '#D1C4E9',
+    borderWidth: 1,
+    backgroundColor: '#F3E5F5',
   },
   checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    backgroundColor: '#EDE7F6',
+    borderRadius: 12,
+    padding: 12,
     marginBottom: 16,
   },
   button: {
-    marginTop: 8,
+    marginTop: 16,
+    backgroundColor: '#7E57C2',
+    paddingVertical: 10,
+    borderRadius: 10,
   },
 });
