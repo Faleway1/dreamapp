@@ -3,6 +3,7 @@
 import { StyleSheet } from 'react-native';
 import { Text, View } from '@/components/Themed';
 import DreamList from '@/components/DreamList';
+import { router } from 'expo-router';
 
 export default function TabThreeScreen() {
   return (
