@@ -35,13 +35,13 @@ export default function DreamForm() {
           const storedData = await AsyncStorage.getItem('dreamFormDataArray');
           const dreamArray = storedData ? JSON.parse(storedData) : [];
           const dream = dreamArray[Number(editingIndex)];
-  
+
           if (!dream) {
             Alert.alert("Erreur", "Le rêve à modifier est introuvable.");
             router.replace('/three');
             return;
           }
-  
+
           setDreamText(dream.dreamText || '');
           setDreamDate(dream.dreamDate || '');
           setDreamTime(dream.dreamTime || '');
@@ -61,7 +61,7 @@ export default function DreamForm() {
         }
       }
     };
-  
+
     loadDreamData();
   }, [editingIndex]);
 
@@ -73,7 +73,7 @@ export default function DreamForm() {
     try {
       const existingData = await AsyncStorage.getItem('dreamFormDataArray');
       const formDataArray = existingData ? JSON.parse(existingData) : [];
-  
+
       const newDream = {
         dreamText,
         dreamDate,
@@ -90,7 +90,7 @@ export default function DreamForm() {
         personalMeaning,
         dreamTone,
       };
-  
+
       if (editingIndex !== undefined) {
         formDataArray[Number(editingIndex)] = newDream;
         Alert.alert('Succès', 'Le rêve a bien été modifié.');
@@ -113,9 +113,9 @@ export default function DreamForm() {
         setPersonalMeaning('');
         setDreamTone('');
       }
-  
+
       await AsyncStorage.setItem('dreamFormDataArray', JSON.stringify(formDataArray));
-  
+
       router.replace('/(tabs)/three'); // retour vers la page précédente
     } catch (error) {
       console.error('Erreur lors de la sauvegarde des données:', error);
